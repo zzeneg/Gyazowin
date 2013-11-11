@@ -107,7 +107,17 @@
     <ResourceCompile Include="gyazowin.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\Readme.txt" />
+    <Text Include="..\Readme.txt">
+      <DeploymentContent>false</DeploymentContent>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="gyazo.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="gyazo.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
