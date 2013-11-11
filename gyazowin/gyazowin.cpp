@@ -830,7 +830,7 @@ BOOL uploadFile(HWND hwnd, LPCTSTR fileName)
 	const int nSize = 256;
 	LPCTSTR DEFAULT_UPLOAD_SERVER = _T("upload.gyazo.com");
 	LPCTSTR DEFAULT_UPLOAD_PATH   = _T("/upload.cgi");
-	LPCTSTR DEFAULT_USER_AGENT    = _T("User-Agent: Gyazowin/1.0\r\n");
+	//LPCTSTR DEFAULT_USER_AGENT    = _T("User-Agent: Gyazowin/1.0\r\n");
 	const int DEFAULT_UPLOAD_SERVER_PORT = INTERNET_DEFAULT_HTTP_PORT;
 
 	TCHAR upload_server[nSize];
@@ -838,7 +838,7 @@ BOOL uploadFile(HWND hwnd, LPCTSTR fileName)
 	TCHAR ua[nSize];
 	lstrcpy(upload_server, DEFAULT_UPLOAD_SERVER);
 	lstrcpy(upload_path, DEFAULT_UPLOAD_PATH);
-	lstrcpy(ua, DEFAULT_USER_AGENT);
+	//lstrcpy(ua, DEFAULT_USER_AGENT);
 	int upload_server_port = DEFAULT_UPLOAD_SERVER_PORT;
 
 	TCHAR runtime_path[MAX_PATH+1];
@@ -854,7 +854,7 @@ BOOL uploadFile(HWND hwnd, LPCTSTR fileName)
 		LPCTSTR SECTION_NAME = _T("gyazo");
 		GetPrivateProfileString(SECTION_NAME, _T("server"), DEFAULT_UPLOAD_SERVER, upload_server, sizeof(upload_server), config_file);
 		GetPrivateProfileString(SECTION_NAME, _T("path"), DEFAULT_UPLOAD_PATH, upload_path, sizeof(upload_path), config_file);
-		GetPrivateProfileString(SECTION_NAME, _T("user_agent"), DEFAULT_USER_AGENT, ua, sizeof(ua), config_file);
+		//GetPrivateProfileString(SECTION_NAME, _T("user_agent"), DEFAULT_USER_AGENT, ua, sizeof(ua), config_file);
 		upload_server_port = GetPrivateProfileInt(SECTION_NAME, _T("port"), DEFAULT_UPLOAD_SERVER_PORT, config_file);
 	}
 
@@ -874,8 +874,8 @@ BOOL uploadFile(HWND hwnd, LPCTSTR fileName)
 	buf << "--";
 	buf << sBoundary;
 	buf << sCrLf;
-	buf << ua;
-	buf << sCrLf;
+	//buf << ua;
+	//buf << sCrLf;
 	buf << "content-disposition: form-data; name=\"id\"";
 	buf << sCrLf;
 	buf << sCrLf;
