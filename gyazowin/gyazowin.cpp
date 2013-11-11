@@ -923,7 +923,7 @@ BOOL uploadFile(HWND hwnd, LPCTSTR fileName)
 	
 	// 接続先
 	HINTERNET hConnection = InternetConnect(hSession, 
-		upload_server, INTERNET_DEFAULT_HTTP_PORT,
+		upload_server, upload_server_port,
 		NULL, NULL, INTERNET_SERVICE_HTTP, 0, NULL);
 	if(NULL == hConnection) {
 		LastErrorMessageBox(hwnd, _T("Cannot initiate connection."));
