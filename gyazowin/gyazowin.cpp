@@ -27,7 +27,7 @@ VOID				execUrl(const char* str);
 VOID				setClipBoardText(const char* str);
 BOOL				convertPNG(LPCTSTR destFile, LPCTSTR srcFile);
 BOOL				savePNG(LPCTSTR fileName, HBITMAP newBMP);
-BOOL				uploadFile(HWND hwnd, LPCTSTR fileName);
+BOOL				uploadFile(HWND hwnd, LPCTSTR fileName, BOOL isPng);
 std::string			getId();
 BOOL				saveId(const WCHAR* str);
 void				LastErrorMessageBox(HWND hwnd, LPTSTR lpszError);
@@ -63,25 +63,27 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	if ( 2 == __argc )
 	{
 		// ファイルをアップロードして終了
-		if (isPng(__targv[1])) {
+		//if (isPng(__targv[1])) {
 			// PNG はそのままupload
-			uploadFile(NULL, __targv[1]);
-		}else {
+		//	uploadFile(NULL, __targv[1]);
+		//}else {
 			// PNG 形式に変換
-			TCHAR tmpDir[MAX_PATH], tmpFile[MAX_PATH];
-			GetTempPath(MAX_PATH, tmpDir);
-			GetTempFileName(tmpDir, _T("gya"), 0, tmpFile);
+			//TCHAR tmpDir[MAX_PATH], tmpFile[MAX_PATH];
+			//GetTempPath(MAX_PATH, tmpDir);
+			//GetTempFileName(tmpDir, _T("gya"), 0, tmpFile);
 			
-			if (convertPNG(tmpFile, __targv[1])) {
+			//if (convertPNG(tmpFile, __targv[1])) {
 				//アップロード
-				uploadFile(NULL, tmpFile);
-			} else {
+			//	uploadFile(NULL, tmpFile);
+			//} else {
 				// PNGに変換できなかった...
-				MessageBox(NULL, _T("Cannot convert this image"), szTitle, 
-					MB_OK | MB_ICONERROR);
-			}
-			DeleteFile(tmpFile);
-		}
+			//	MessageBox(NULL, _T("Cannot convert this image"), szTitle, 
+			//		MB_OK | MB_ICONERROR);
+			//}
+			//DeleteFile(tmpFile);
+		//}
+
+		uploadFile(NULL, __targv[1], false);
 		return TRUE;
 	}
 
@@ -610,7 +612,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (savePNG(tmpFile, newBMP)) {
 
 				// うｐ
-				if (!uploadFile(hWnd, tmpFile)) {
+				if (!uploadFile(hWnd, tmpFile, true)) {
 					// アップロードに失敗...
 					// エラーメッセージは既に表示されている
 
@@ -825,7 +827,7 @@ void LastErrorMessageBox(HWND hwnd, LPTSTR lpszError)
 }
 
 // PNG ファイルをアップロードする.
-BOOL uploadFile(HWND hwnd, LPCTSTR fileName)
+BOOL uploadFile(HWND hwnd, LPCTSTR fileName, BOOL isPng)
 {
 	const int nSize = 256;
 	LPCTSTR DEFAULT_UPLOAD_SERVER = _T("upload.gyazo.com");
@@ -835,7 +837,7 @@ BOOL uploadFile(HWND hwnd, LPCTSTR fileName)
 
 	TCHAR upload_server[nSize];
 	TCHAR upload_path[nSize];
-	TCHAR ua[nSize];
+	//TCHAR ua[nSize];
 	lstrcpy(upload_server, DEFAULT_UPLOAD_SERVER);
 	lstrcpy(upload_path, DEFAULT_UPLOAD_PATH);
 	//lstrcpy(ua, DEFAULT_USER_AGENT);
@@ -868,6 +870,14 @@ BOOL uploadFile(HWND hwnd, LPCTSTR fileName)
 	
 	// ID を取得
 	idStr = getId();
+	wchar_t fname[_MAX_FNAME];
+	wchar_t ext[_MAX_EXT];
+	_wsplitpath(fileName, NULL, NULL, fname, ext );
+	std::string data = (isPng) ? "imagedata" : "data";
+	LPCTSTR file = (isPng) ? _T("gyazo") : wcsncat(fname, ext, _MAX_FNAME);
+	size_t size = wcstombs(NULL, file, 0);
+	char* CharStr = new char[size + 1];
+	wcstombs(CharStr, file, size + 1);
 
 	// メッセージの構成
 	// -- "id" part
@@ -886,7 +896,11 @@ BOOL uploadFile(HWND hwnd, LPCTSTR fileName)
 	buf << "--";
 	buf << sBoundary;
 	buf << sCrLf;
-	buf << "content-disposition: form-data; name=\"imagedata\"; filename=\"gyazo.com\"";
+	buf << "content-disposition: form-data; name=\"";
+	buf << data;
+	buf << "\"; filename=\"";
+	buf << CharStr;
+	buf << "\"";
 	buf << sCrLf;
 	//buf << "Content-type: image/png";	// 一応
 	//buf << sCrLf;
