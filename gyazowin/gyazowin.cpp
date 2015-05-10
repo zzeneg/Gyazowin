@@ -20,15 +20,11 @@ LRESULT CALLBACK	LayerWndProc(HWND, UINT, WPARAM, LPARAM);
 
 int					GetEncoderClsid(const WCHAR* format, CLSID* pClsid);
 
-BOOL				isPng(LPCTSTR fileName);
 VOID				drawRubberband(HDC hdc, LPRECT newRect, BOOL erase);
 VOID				execUrl(const char* str);
 VOID				setClipBoardText(const char* str);
-BOOL				convertPNG(LPCTSTR destFile, LPCTSTR srcFile);
 BOOL				savePNG(LPCTSTR fileName, HBITMAP newBMP);
 BOOL				uploadFile(HWND hwnd, LPCTSTR fileName, BOOL isPng);
-std::string			getId();
-BOOL				saveId(const WCHAR* str);
 void				LastErrorMessageBox(HWND hwnd, LPTSTR lpszError);
 
 
@@ -61,27 +57,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	// File specified when the application was launched
 	if ( 2 == __argc )
 	{
-		// If image is PNG, upload it
-		//if (isPng(__targv[1])) {
-			// PNG Upload the PNG file
-		//	uploadFile(NULL, __targv[1]);
-		//}else {
-			// Attempt to convert the PNG file
-			//TCHAR tmpDir[MAX_PATH], tmpFile[MAX_PATH];
-			//GetTempPath(MAX_PATH, tmpDir);
-			//GetTempFileName(tmpDir, _T("gya"), 0, tmpFile);
-			
-			//if (convertPNG(tmpFile, __targv[1])) {
-				// If the PNG convertion succeeded, upload it
-			//	uploadFile(NULL, tmpFile);
-			//} else {
-				// PNG conversion failed, notify the user
-			//	MessageBox(NULL, _T("Cannot convert this image"), szTitle, 
-			//		MB_OK | MB_ICONERROR);
-			//}
-			//DeleteFile(tmpFile);
-		//}
-
+		// Upload file
 		uploadFile(NULL, __targv[1], false);
 		return TRUE;
 	}
@@ -103,29 +79,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	}
 
 	return (int) msg.wParam;
-}
-
-// Validates if the file on the specified path is a valid PNG file
-BOOL isPng(LPCTSTR fileName)
-{
-	unsigned char pngHead[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
-	unsigned char readHead[8];
-	
-	FILE *fp = NULL;
-	
-	if (0 != _tfopen_s(&fp, fileName, _T("rb")) ||
-		8 != fread(readHead, 1, 8, fp)) {
-		// ファイルが読めない	
-		return FALSE;
-	}
-	fclose(fp);
-	
-	// compare
-	for(unsigned int i=0;i<8;i++)
-		if(pngHead[i] != readHead[i]) return FALSE;
-
-	return TRUE;
-
 }
 
 // Registering the window instance
@@ -161,7 +114,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
 	return RegisterClass(&wc);
 }
-
 
 // Initialization of the window instance which covers the entire screen
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
@@ -338,37 +290,6 @@ VOID drawRubberband(HDC hdc, LPRECT newRect, BOOL erase)
 
 */
 
-}
-
-// Converts the source file to PNG on the specified location
-BOOL convertPNG(LPCTSTR destFile, LPCTSTR srcFile)
-{
-	BOOL				res = FALSE;
-
-	GdiplusStartupInput	gdiplusStartupInput;
-	ULONG_PTR			gdiplusToken;
-	CLSID				clsidEncoder;
-
-	// GDI+ の初期化
-	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-
-	Image *b = new Image(srcFile, 0);
-
-	if (0 == b->GetLastStatus()) {
-		if (GetEncoderClsid(L"image/png", &clsidEncoder)) {
-			// save!
-			if (0 == b->Save(destFile, &clsidEncoder, 0) ) {
-					// 保存できた
-					res = TRUE;
-			}
-		}
-	}
-
-	// 後始末
-	delete b;
-	GdiplusShutdown(gdiplusToken);
-
-	return res;
 }
 
 // Saves a PNG file to a specified location
@@ -709,90 +630,6 @@ VOID execUrl(const char* str)
 	free(wcUrl);
 }
 
-// Save ID of the image
-std::string getId()
-{
-
-    TCHAR idFile[_MAX_PATH];
-	TCHAR idDir[_MAX_PATH];
-
-    SHGetSpecialFolderPath( NULL, idFile, CSIDL_APPDATA, FALSE );
-
-	 _tcscat_s( idFile, _T("\\Gyazo"));
-	 _tcscpy_s( idDir, idFile);
-	 _tcscat_s( idFile, _T("\\id.txt"));
-
-	const TCHAR*	 idOldFile			= _T("id.txt");
-	BOOL oldFileExist = FALSE;
-
-	std::string idStr;
-
-	// まずはファイルから ID をロード
-	std::ifstream ifs;
-
-	ifs.open(idFile);
-	if (! ifs.fail()) {
-		// ID を読み込む
-		ifs >> idStr;
-		ifs.close();
-	} else{		
-		std::ifstream ifsold;
-		ifsold.open(idOldFile);
-		if (! ifsold.fail()) {
-			// 同一ディレクトリからID を読み込む(旧バージョンとの互換性)
-			ifsold >> idStr;
-			ifsold.close();
-		}
-	}
-
-	return idStr;
-}
-
-// Save ID
-BOOL saveId(const WCHAR* str)
-{
-
-    TCHAR idFile[_MAX_PATH];
-	TCHAR idDir[_MAX_PATH];
-
-    SHGetSpecialFolderPath( NULL, idFile, CSIDL_APPDATA, FALSE );
-
-	 _tcscat_s( idFile, _T("\\Gyazo"));
-	 _tcscpy_s( idDir, idFile);
-	 _tcscat_s( idFile, _T("\\id.txt"));
-
-	const TCHAR*	 idOldFile			= _T("id.txt");
-
-	size_t  slen;
-	size_t  dcount;
-	slen  = _tcslen(str) + 1; // NULL
-
-	char *idStr = (char *)malloc(slen * sizeof(char));
-	// バイト文字に変換
-	wcstombs_s(&dcount, idStr, slen, str, slen);
-
-	// ID を保存する
-	CreateDirectory(idDir,NULL);
-	std::ofstream ofs;
-	ofs.open(idFile);
-	if (! ofs.fail()) {
-		ofs << idStr;
-		ofs.close();
-
-		// 旧設定ファイルの削除
-		if (PathFileExists(idOldFile)){
-			DeleteFile(idOldFile);
-		}
-	}else{
-		free(idStr);
-		return FALSE;
-	}
-
-	free(idStr);
-	return TRUE;
-}
-
-
 void LastErrorMessageBox(HWND hwnd, LPTSTR lpszError) 
 { 
     // Retrieve the system error message for the last-error code
@@ -865,10 +702,7 @@ BOOL uploadFile(HWND hwnd, LPCTSTR fileName, BOOL isPng)
 		_T("Content-type: multipart/form-data; boundary=----BOUNDARYBOUNDARY----");
 
 	std::ostringstream	buf;	// 送信メッセージ
-	std::string			idStr;	// ID
-	
-	// ID を取得
-	idStr = getId();
+
 	wchar_t fname[_MAX_FNAME];
 	wchar_t ext[_MAX_EXT];
 	_wsplitpath(fileName, NULL, NULL, fname, ext );
@@ -877,19 +711,6 @@ BOOL uploadFile(HWND hwnd, LPCTSTR fileName, BOOL isPng)
 	size_t size = wcstombs(NULL, file, 0);
 	char* CharStr = new char[size + 1];
 	wcstombs(CharStr, file, size + 1);
-
-	// メッセージの構成
-	// -- "id" part
-	buf << "--";
-	buf << sBoundary;
-	buf << sCrLf;
-	//buf << ua;
-	//buf << sCrLf;
-	buf << "content-disposition: form-data; name=\"id\"";
-	buf << sCrLf;
-	buf << sCrLf;
-	buf << idStr;
-	buf << sCrLf;
 
 	// -- "imagedata" part
 	buf << "--";
@@ -985,19 +806,6 @@ BOOL uploadFile(HWND hwnd, LPCTSTR fileName, BOOL isPng)
 			MessageBox(hwnd, errorBuf, szTitle, MB_ICONERROR | MB_OK);
 		} else {
 			// upload succeeded
-
-			// get new id
-			DWORD idLen = 100;
-			TCHAR newid[100];
-			
-			memset(newid, 0, idLen*sizeof(TCHAR));	
-			_tcscpy_s(newid, _T("X-Gyazo-Id"));
-
-			HttpQueryInfo(hRequest, HTTP_QUERY_CUSTOM, newid, &idLen, 0);
-			if (GetLastError() != ERROR_HTTP_HEADER_NOT_FOUND && idLen != 0) {
-				//save new id
-				saveId(newid);
-			}
 
 			// 結果 (URL) を読取る
 			DWORD len;
