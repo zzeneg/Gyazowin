@@ -107,7 +107,7 @@
     <ResourceCompile Include="gyazowin.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\Readme.txt">
+    <Text Include="..\Readme.md">
       <DeploymentContent>false</DeploymentContent>
     </Text>
   </ItemGroup>
