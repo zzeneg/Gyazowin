@@ -799,28 +799,30 @@ BOOL uploadFile(HWND hwnd, LPCTSTR fileName, BOOL isPng)
 			return FALSE;
 		}
 
+		// 結果 (URL) を読取る
+		DWORD len;
+		char  resbuf[1024];
+		std::string result;
+
+		// そんなに長いことはないけどまあ一応
+		while (InternetReadFile(hRequest, (LPVOID)resbuf, 1024, &len)
+			&& len != 0)
+		{
+			result.append(resbuf, len);
+		}
+
+		// 取得結果は NULL terminate されていないので
+		result += '\0';
+
 		if( _ttoi(resCode) != 200 ) {
 			// upload 失敗 (status error)
 			TCHAR errorBuf[200];
-			StringCchPrintf((LPTSTR)errorBuf, 200, TEXT("Cannot upload the image. Error %s"),resCode);
+			StringCchPrintf(errorBuf, 200, TEXT("Cannot upload the image. Error %s "),resCode);
+			std::wstring stemp = std::wstring(result.begin(), result.end());
+			StringCchCat(errorBuf, 200, (LPTSTR)stemp.c_str());
 			MessageBox(hwnd, errorBuf, szTitle, MB_ICONERROR | MB_OK);
 		} else {
 			// upload succeeded
-
-			// 結果 (URL) を読取る
-			DWORD len;
-			char  resbuf[1024];
-			std::string result;
-			
-			// そんなに長いことはないけどまあ一応
-			while(InternetReadFile(hRequest, (LPVOID) resbuf, 1024, &len) 
-				&& len != 0)
-			{
-				result.append(resbuf, len);
-			}
-
-			// 取得結果は NULL terminate されていないので
-			result += '\0';
 
 			// クリップボードに URL をコピー
 			setClipBoardText(result.c_str());
